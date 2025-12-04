@@ -1,0 +1,20 @@
+; Energy minimization (.mdp) – steepest descent EM to relax system
+integrator  = steep        ; Steepest descent algorithm for energy minimization
+emtol       = 1000.0       ; Converge until Fmax < 1000 kJ/mol·nm
+emstep      = 0.01         ; Initial step-size in nm (small for stability)
+nsteps      = 50000        ; Max 50,000 steps to converge (sufficient for most systems)
+
+; Neighbor searching and nonbonded parameters (CHARMM36 settings)
+cutoff-scheme = Verlet
+ns_type     = grid         ; Use grid-based neighbor searching
+nstlist     = 1            ; Update neighbor list every step (ensure accuracy in EM)
+rlist       = 1.2          ; Neighbor list cutoff = 1.2 nm
+coulombtype = PME          ; PME for electrostatics (accurate Coulomb)
+rcoulomb    = 1.2          ; Short-range electrostatic cutoff = 1.2 nm
+vdwtype     = cutoff
+vdw-modifier = force-switch ; Smoothly switch van der Waals at 1.0 nm
+rvdw-switch = 1.0          ; LJ switching starting at 1.0 nm
+rvdw        = 1.2          ; Short-range van der Waals cutoff = 1.2 nm
+DispCorr    = no           ; No long-range dispersion correction (consistent with force-field)
+pbc         = xyz          ; Periodic boundary conditions in all dimensions
+

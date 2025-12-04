@@ -1,0 +1,51 @@
+; Production MD (.mdp) – 200 ns unrestrained simulation at 340 K, 1 bar
+integrator    = md
+nsteps        = 100000000      ; 200 ns total (100,000,000 steps * 0.002 ps = 200,000 ps)
+dt            = 0.002
+
+; Output control
+nstxout-compressed = 5000   ; Save coordinates to .xtc every 5000 steps (10 ps)
+nstenergy     = 1000        ; Energy output every 1000 steps (2 ps)
+nstlog        = 1000        ; Log update every 1000 steps (2 ps)
+nstxout       = 10000       ; Save full-precision coordinates (.trr) every 10000 steps (~20 ps)
+nstvout       = 10000       ; Save velocities to .trr every 10000 steps
+
+; Neighbor searching and nonbonded interactions
+cutoff-scheme = Verlet
+ns_type     = grid
+nstlist     = 20            ; Neighbor list update every 20 steps
+rlist       = 1.2
+coulombtype = PME           ; Long-range electrostatics with PME
+rcoulomb    = 1.2           ; 1.2 nm short-range Coulomb cutoff
+vdwtype     = cutoff
+vdw-modifier = force-switch ; Force-switching for van der Waals
+rvdw-switch = 1.0
+rvdw        = 1.2           ; 1.2 nm van der Waals cutoff
+DispCorr    = no            ; No dispersion correction (CHARMM36 uses truncated+smoothing)
+pbc         = xyz
+
+; Temperature coupling (maintain 300 K)
+tcoupl      = V-rescale              ; Thermostat: velocity-rescaling
+tc-grps     = Protein  Non-Protein   ; Couple protein and solvent/ions separately
+tau_t       = 1.0    1.0            ; Time constant for thermostat (longer, for gentle coupling in production)
+ref_t       = 340    340            ; Reference temperature 340 K for each group
+
+; Pressure coupling (maintain 1 bar)
+pcoupl          = Parrinello-Rahman  ; Barostat: Parrinello-Rahman for NPT
+pcoupltype      = isotropic         ; Isotropic pressure coupling
+tau_p           = 2.0               ; Pressure coupling time constant (ps)
+ref_p           = 1.0               ; Reference pressure = 1 bar
+compressibility = 4.5e-5            ; Compressibility of water
+
+; **No position restraints** – the protein is free in production MD
+; (define = -DPOSRES is omitted to remove restraints)
+
+; Continuation from equilibration
+continuation = yes   ; Continue from previous run (use NPT end state)
+gen_vel     = no     ; Do not generate velocities (preserve existing velocities)
+
+; Bonds and constraints
+constraints = h-bonds          ; Constrain bonds to hydrogen (allows 2 fs timestep)
+constraint_algorithm = LINCS
+lincs_order    = 4
+lincs_iter     = 1

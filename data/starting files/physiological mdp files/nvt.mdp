@@ -1,0 +1,48 @@
+; NVT equilibration (.mdp) – 100 ps at 300 K with protein heavy atoms restrained
+integrator  = md
+nsteps      = 50000         ; 100 ps total (50,000 steps at 0.002 ps step size)
+dt          = 0.002         ; 2 fs timestep
+
+; Output control
+nstxout-compressed = 1000   ; Write .xtc trajectory every 1000 steps (2 ps)
+nstenergy   = 500           ; Write energies every 500 steps (1 ps)
+nstlog      = 500           ; Update log every 500 steps (1 ps)
+nstxout     = 0             ; Don't output .trr coordinates (only final .gro will be saved)
+nstvout     = 0             ; Don't output velocities
+
+; Neighbor searching and cutoffs (CHARMM36)
+cutoff-scheme = Verlet
+ns_type     = grid
+nstlist     = 20            ; Update neighbor list every 20 steps (~40 fs)
+rlist       = 1.2           ; Neighbor list cutoff = 1.2 nm
+coulombtype = PME           ; PME for electrostatics
+rcoulomb    = 1.2           ; Short-range electrostatic cutoff = 1.2 nm
+vdwtype     = cutoff
+vdw-modifier = force-switch
+rvdw-switch = 1.0
+rvdw        = 1.2           ; LJ cutoff = 1.2 nm with force-switch smoothing
+DispCorr    = no            ; No dispersion correction (not needed for CHARMM36)
+pbc         = xyz
+
+; Temperature coupling (NVT ensemble)
+tcoupl      = V-rescale            ; Modified Berendsen thermostat (canonical ensemble)
+tc-grps     = Protein  Non-Protein ; Separate coupling for protein vs. solvent/ions
+tau_t       = 0.1      0.1         ; Time constant for T coupling (fast coupling for quick equilibration)
+ref_t       = 300      300         ; Reference temperature for each group (300 K)
+
+; Pressure coupling – off for NVT
+pcoupl      = no
+
+; Position restraints on protein heavy atoms
+define      = -DPOSRES             ; Apply position restraints to heavy atoms
+
+; Velocity generation for equilibration start
+gen_vel     = yes
+gen_temp    = 300                  ; Initialize velocities to 300 K
+gen_seed    = 12345                ; Random seed for velocity generation
+
+; Bonds and constraints
+constraints = h-bonds             ; Constrain bonds to H (allow 2 fs timestep)
+constraint_algorithm = LINCS
+lincs_order    = 4
+lincs_iter     = 1

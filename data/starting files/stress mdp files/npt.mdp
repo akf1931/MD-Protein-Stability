@@ -1,0 +1,52 @@
+; NPT equilibration (.mdp) – 100 ps at 1 bar, 340 K with protein heavy atoms restrained
+integrator  = md
+nsteps      = 50000           ; 100 ps
+dt          = 0.002
+
+; Output control (similar to NVT)
+nstxout-compressed = 1000    ; .xtc trajectory every 2 ps
+nstenergy   = 500            ; energies every 1 ps
+nstlog      = 500            ; log every 1 ps
+nstxout     = 0
+nstvout     = 0
+
+; Neighbor searching and cutoffs (same as NVT phase)
+cutoff-scheme = Verlet
+ns_type     = grid
+nstlist     = 20
+rlist       = 1.2
+coulombtype = PME
+rcoulomb    = 1.2
+vdwtype     = cutoff
+vdw-modifier = force-switch
+rvdw-switch = 1.0
+rvdw        = 1.2
+DispCorr    = no
+pbc         = xyz
+
+; Temperature coupling (300 K, continue from NVT)
+tcoupl      = V-rescale
+tc-grps     = Protein  Non-Protein
+tau_t       = 0.1    0.1      ; Fast T coupling (same as NVT phase)
+ref_t       = 340    340
+
+; Pressure coupling (isotropic NPT)
+pcoupl          = Parrinello-Rahman   ; Use Parrinello-Rahman barostat for pressure coupling
+pcoupltype      = isotropic           ; Uniform scaling of the box
+tau_p           = 2.0                 ; Pressure coupling time constant (ps)
+ref_p           = 1.0                 ; Reference pressure = 1 bar
+compressibility = 4.5e-5              ; Compressibility of water (bar^-1)
+refcoord_scaling = com                ; Scale restrained reference coordinates with box (avoid shape distortion)
+
+; Position restraints (still on during pressure equilibration)
+define      = -DPOSRES               ; Keep heavy atom restraints active
+
+; Continuation from NVT equilibration
+continuation = yes                   ; We are continuing from a previous run (NVT)
+gen_vel     = no                     ; Do NOT generate new velocities (use velocities from NVT)
+
+; Bonds and constraints
+constraints = h-bonds
+constraint_algorithm = LINCS
+lincs_order    = 4
+lincs_iter     = 1
